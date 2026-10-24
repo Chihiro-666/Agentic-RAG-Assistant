@@ -15,7 +15,7 @@ class Observability:
             return
 
         if not config.LANGFUSE_PUBLIC_KEY or not config.LANGFUSE_SECRET_KEY:
-            logger.warning("Langfuse enabled but API keys are missing — skipping")
+            logger.warning("已启用 Langfuse，但缺少 API 密钥，跳过初始化")
             self._enabled = False
             return
 
@@ -26,15 +26,15 @@ class Observability:
             self._client = get_client()
 
             if self._client.auth_check():
-                print("Langfuse client is authenticated and ready!")
+                print("Langfuse 客户端认证成功，已就绪！")
             else:
-                print("Authentication failed. Please check your credentials and host.")
+                print("认证失败，请检查凭据和服务地址。")
                 self._enabled = False
                 return
 
             self._handler = CallbackHandler()
         except Exception as exc:
-            logger.warning("Could not initialize Langfuse: %s", exc)
+            logger.warning("初始化 Langfuse 失败：%s", exc)
             self._enabled = False
 
     def get_handler(self):

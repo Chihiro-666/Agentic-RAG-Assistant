@@ -29,32 +29,31 @@ class VectorDbManager:
     def create_collection(self, collection_name):
         expected_size = self._dense_vector_size()
         if not self.__client.collection_exists(collection_name):
-            print(f"Creating collection: {collection_name}...")
+            print(f"正在创建集合：{collection_name}...")
             self.__client.create_collection(
                 collection_name=collection_name,
                 vectors_config=qmodels.VectorParams(size=expected_size, distance=qmodels.Distance.COSINE),
                 sparse_vectors_config={config.SPARSE_VECTOR_NAME: qmodels.SparseVectorParams()},
             )
-            print(f"✓ Collection created: {collection_name}")
+            print(f"✓ 集合已创建：{collection_name}")
         else:
             collection_info = self.__client.get_collection(collection_name)
             existing_size = self._collection_vector_size(collection_info)
             if existing_size and existing_size != expected_size:
                 raise ValueError(
-                    f"Qdrant collection '{collection_name}' has dense vector size "
-                    f"{existing_size}, but '{config.DENSE_MODEL}' produces size "
-                    f"{expected_size}. Clear and re-index the collection after "
-                    "changing embedding models."
+                    f"Qdrant 集合“{collection_name}”的稠密向量维度为 "
+                    f"{existing_size}，但嵌入模型“{config.DENSE_MODEL}”生成的维度为 "
+                    f"{expected_size}。更换嵌入模型后，请清空集合并重新建立索引。"
                 )
-            print(f"✓ Collection already exists: {collection_name}")
+            print(f"✓ 集合已存在：{collection_name}")
 
     def delete_collection(self, collection_name):
         try:
             if self.__client.collection_exists(collection_name):
-                print(f"Removing existing Qdrant collection: {collection_name}")
+                print(f"正在删除已有的 Qdrant 集合：{collection_name}")
                 self.__client.delete_collection(collection_name)
         except Exception as e:
-            raise RuntimeError(f"Unable to delete Qdrant collection '{collection_name}'.") from e
+            raise RuntimeError(f"无法删除 Qdrant 集合“{collection_name}”。") from e
 
     def get_collection(self, collection_name) -> QdrantVectorStore:
         try:
@@ -67,4 +66,4 @@ class VectorDbManager:
                     sparse_vector_name=config.SPARSE_VECTOR_NAME
                 )
         except Exception as e:
-            raise RuntimeError(f"Unable to initialize Qdrant collection '{collection_name}'.") from e
+            raise RuntimeError(f"无法初始化 Qdrant 集合“{collection_name}”。") from e

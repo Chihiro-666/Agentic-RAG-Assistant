@@ -7,11 +7,11 @@ from langchain_text_splitters import MarkdownHeaderTextSplitter, RecursiveCharac
 class DocumentChunker:
     def __init__(self):
         if config.MIN_PARENT_SIZE <= 0 or config.MAX_PARENT_SIZE < config.MIN_PARENT_SIZE:
-            raise ValueError("Parent chunk sizes must be positive and MIN_PARENT_SIZE <= MAX_PARENT_SIZE.")
+            raise ValueError("父块大小必须为正数，且 MIN_PARENT_SIZE <= MAX_PARENT_SIZE。")
         if not 0 <= config.CHILD_CHUNK_OVERLAP < config.CHILD_CHUNK_SIZE:
-            raise ValueError("CHILD_CHUNK_OVERLAP must be smaller than CHILD_CHUNK_SIZE.")
+            raise ValueError("CHILD_CHUNK_OVERLAP 必须小于 CHILD_CHUNK_SIZE。")
         if config.CHILD_CHUNK_OVERLAP >= config.MAX_PARENT_SIZE:
-            raise ValueError("CHILD_CHUNK_OVERLAP must be smaller than MAX_PARENT_SIZE.")
+            raise ValueError("CHILD_CHUNK_OVERLAP 必须小于 MAX_PARENT_SIZE。")
 
         self.__parent_splitter = MarkdownHeaderTextSplitter(
             headers_to_split_on=config.HEADERS_TO_SPLIT_ON, 
@@ -61,7 +61,7 @@ class DocumentChunker:
         split_parents = self.__split_large_parents(merged_parents)
         cleaned_parents = self.__clean_small_chunks(split_parents)
         if any(len(chunk.page_content) > self.__max_parent_size for chunk in cleaned_parents):
-            raise ValueError("Parent chunking produced a chunk larger than MAX_PARENT_SIZE.")
+            raise ValueError("父子分块结果中存在超过 MAX_PARENT_SIZE 的文本块。")
         
         all_parent_chunks, all_child_chunks = [], []
         self.__create_child_chunks(

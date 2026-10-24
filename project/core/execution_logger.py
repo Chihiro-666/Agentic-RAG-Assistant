@@ -158,7 +158,7 @@ def _print_block(title: str, payload: Any, color: str) -> None:
 
 def log_chat_start(message: str, thread_id: str, has_pending_interrupt: bool) -> None:
     _print_block(
-        "USER QUERY",
+        "用户问题",
         {
             "thread_id": thread_id,
             "pending_interrupt": has_pending_interrupt,
@@ -169,34 +169,34 @@ def log_chat_start(message: str, thread_id: str, has_pending_interrupt: bool) ->
 
 
 def log_chat_end(state: Any) -> None:
-    _print_block("FINAL GRAPH STATE", state_preview(state), "blue")
+    _print_block("最终工作流状态", state_preview(state), "blue")
 
 
 def log_node_start(name: str, state: Any) -> None:
-    _print_block(f"NODE START: {name}", state_preview(state), "cyan")
+    _print_block(f"节点开始：{name}", state_preview(state), "cyan")
 
 
 def log_node_end(name: str, update: Any) -> None:
-    _print_block(f"NODE OUTPUT: {name}", update_preview(update), "green")
+    _print_block(f"节点输出：{name}", update_preview(update), "green")
 
 
 def log_route(name: str, decision: Any, state: Any | None = None) -> None:
     payload = {"decision": _truncate(decision)}
     if state is not None:
         payload["state"] = state_preview(state)
-    _print_block(f"ROUTE: {name}", payload, "yellow")
+    _print_block(f"路由：{name}", payload, "yellow")
 
 
 def log_tool_start(name: str, args: dict[str, Any]) -> None:
-    _print_block(f"TOOL START: {name}", args, "magenta")
+    _print_block(f"工具开始：{name}", args, "magenta")
 
 
 def log_tool_end(name: str, output: Any) -> None:
-    _print_block(f"TOOL OUTPUT: {name}", {"output": _truncate(output)}, "magenta")
+    _print_block(f"工具输出：{name}", {"output": _truncate(output)}, "magenta")
 
 
 def log_error(scope: str, error: Exception) -> None:
-    _print_block(f"ERROR: {scope}", {"type": error.__class__.__name__, "message": str(error)}, "red")
+    _print_block(f"错误：{scope}", {"类型": error.__class__.__name__, "信息": str(error)}, "red")
 
 
 def logged_node(name: str, fn):

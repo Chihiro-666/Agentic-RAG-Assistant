@@ -14,7 +14,15 @@ SPARSE_VECTOR_NAME = "sparse"
 # --- Model Configuration ---
 DENSE_MODEL = "Qwen/Qwen3-Embedding-0.6B"
 SPARSE_MODEL = "Qdrant/bm25"
-LLM_MODEL = "granite4.1:8b"
+# 可通过 OLLAMA_MODEL 指定其他 Ollama 聊天模型。
+LLM_MODEL = os.environ.get("OLLAMA_MODEL", "llama3.1:8b")
+OLLAMA_FALLBACK_MODELS = (
+    "llama3.1:8b",
+    "llama3.2:3b",
+    "mistral:7b-instruct",
+    "qwen2.5:7b",
+    "deepseek-r1:8b",
+)
 JUDGE_MODEL = "ministral-3:3b-instruct-2512-q8_0"
 LLM_TEMPERATURE = 0
 LLM_SEED = 42

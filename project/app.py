@@ -20,7 +20,7 @@ from ui.css import custom_css
 from ui.gradio_app import create_gradio_ui
 
 if __name__ == "__main__":
-    print("\n🔨 Creating RAG Assistant...")
+    print("\n🔨 正在创建 RAG 助手...")
     demo = create_gradio_ui()
-    print("\n🚀 Launching RAG Assistant...")
+    print("\n🚀 正在启动 RAG 助手...")
     demo.launch(css=custom_css)

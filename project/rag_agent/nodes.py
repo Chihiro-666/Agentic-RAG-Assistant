@@ -8,7 +8,7 @@ from utils import estimate_context_tokens
 from config import BASE_TOKEN_THRESHOLD, CHILD_CHUNK_SEPARATOR, MAIN_HISTORY_MESSAGES_TO_KEEP, TOKEN_GROWTH_FACTOR
 
 if MAIN_HISTORY_MESSAGES_TO_KEEP < 2:
-    raise ValueError("MAIN_HISTORY_MESSAGES_TO_KEEP must be at least 2.")
+    raise ValueError("MAIN_HISTORY_MESSAGES_TO_KEEP 必须至少为 2。")
 
 PRE_ANSWER_HISTORY_MESSAGES_TO_KEEP = max(MAIN_HISTORY_MESSAGES_TO_KEEP - 1, 0)
 
@@ -43,7 +43,7 @@ def _retrieval_contexts(messages) -> list[str]:
 def _format_conversation(messages) -> str:
     lines = []
     for msg in messages:
-        role = "User" if isinstance(msg, HumanMessage) else "Assistant"
+        role = "用户" if isinstance(msg, HumanMessage) else "助手"
         lines.append(f"{role}: {msg.content}")
     return "\n".join(lines)
 
@@ -95,9 +95,9 @@ def summarize_history(state: State, llm):
         return updates
 
     existing_summary = state.get("conversation_summary", "").strip()
-    conversation = "Existing summary:\n"
+    conversation = "已有摘要：\n"
     conversation += f"{existing_summary or '(none)'}\n\n"
-    conversation += "New messages to merge into the summary:\n"
+    conversation += "需要合并到摘要中的新消息：\n"
     conversation += _format_conversation(messages_to_summarize)
 
     summary_response = llm.invoke([
@@ -117,9 +117,9 @@ def rewrite_query(state: State, llm):
 
     context_parts = []
     if conversation_summary:
-        context_parts.append(f"Conversation Summary:\n{conversation_summary}")
+        context_parts.append(f"对话摘要：\n{conversation_summary}")
     if recent_messages:
-        context_parts.append(f"Recent Conversation:\n{_format_conversation(recent_messages)}")
+        context_parts.append(f"近期对话：\n{_format_conversation(recent_messages)}")
 
     if pending_query:
         clarifications = [*pending_clarifications, current_query]
@@ -127,13 +127,13 @@ def rewrite_query(state: State, llm):
             f"{index}. {value}" for index, value in enumerate(clarifications, start=1)
         )
         context_parts.append(
-            f"Unresolved User Query:\n{pending_query}\n\n"
-            f"User Clarifications:\n{clarification_text}"
+            f"尚未解决的用户问题：\n{pending_query}\n\n"
+            f"用户补充信息：\n{clarification_text}"
         )
         original_query = f"{pending_query}\nClarifications:\n{clarification_text}"
     else:
         clarifications = []
-        context_parts.append(f"User Query:\n{current_query}")
+        context_parts.append(f"用户问题：\n{current_query}")
         original_query = current_query
 
     context_section = "\n\n".join(context_parts)
@@ -154,7 +154,7 @@ def rewrite_query(state: State, llm):
             "messages": clarification_message_update,
         }
 
-    clarification = response.clarification_needed if response.clarification_needed and len(response.clarification_needed.strip()) > 10 else "I need more information to understand your question."
+    clarification = response.clarification_needed if response.clarification_needed and len(response.clarification_needed.strip()) > 10 else "我还需要更多信息才能理解你的问题。"
     return {
         "questionIsClear": False,
         "originalQuery": "",
@@ -174,12 +174,12 @@ def orchestrator(state: AgentState, llm_with_tools):
     context_summary = state.get("context_summary", "").strip()
     sys_msg = SystemMessage(content=get_orchestrator_prompt())
     summary_injection = (
-        [HumanMessage(content=f"[COMPRESSED CONTEXT FROM PRIOR RESEARCH]\n\n{context_summary}")]
+        [HumanMessage(content=f"[前序检索的压缩上下文]\n\n{context_summary}")]
         if context_summary else []
     )
     if not state.get("messages"):
         human_msg = HumanMessage(content=state["question"], name="agent_question")
-        force_search = HumanMessage(content="YOU MUST CALL 'search_child_chunks' AS THE FIRST STEP TO ANSWER THIS QUESTION.")
+        force_search = HumanMessage(content="回答此问题前，必须首先调用 'search_child_chunks' 检索文档。")
         response = llm_with_tools.invoke([sys_msg] + summary_injection + [human_msg, force_search])
         response = _name_internal_message(response, "agent_response")
         return {"messages": [human_msg, response], "tool_call_count": len(response.tool_calls or []), "iteration_count": 1}
@@ -201,19 +201,19 @@ def fallback_response(state: AgentState, llm):
 
     context_parts = []
     if context_summary:
-        context_parts.append(f"## Compressed Research Context (from prior iterations)\n\n{context_summary}")
+        context_parts.append(f"## 前序检索的压缩上下文\n\n{context_summary}")
     if unique_contents:
         context_parts.append(
-            "## Retrieved Data (current iteration)\n\n" +
-            "\n\n".join(f"--- DATA SOURCE {i} ---\n{content}" for i, content in enumerate(unique_contents, 1))
+            "## 当前检索数据\n\n" +
+            "\n\n".join(f"--- 数据来源 {i} ---\n{content}" for i, content in enumerate(unique_contents, 1))
         )
 
-    context_text = "\n\n".join(context_parts) if context_parts else "No data was retrieved from the documents."
+    context_text = "\n\n".join(context_parts) if context_parts else "未从文档中检索到数据。"
 
     prompt_content = (
-        f"USER QUERY: {state.get('question')}\n\n"
+        f"用户问题：{state.get('question')}\n\n"
         f"{context_text}\n\n"
-        f"INSTRUCTION:\nProvide the best possible answer using only the data above."
+        f"指令：\n用简体中文，仅根据以上数据尽可能准确地回答用户问题。必要时保留原文中的专有名称、引文和技术术语。"
     )
     response = llm.invoke([SystemMessage(content=get_fallback_response_prompt()), HumanMessage(content=prompt_content)])
     response = _name_internal_message(response, "agent_response")
@@ -263,20 +263,20 @@ def compress_context(state: AgentState, llm):
     if not messages:
         return {}
 
-    conversation_text = f"USER QUESTION:\n{state.get('question')}\n\nConversation to compress:\n\n"
+    conversation_text = f"用户问题：\n{state.get('question')}\n\n需要压缩的对话：\n\n"
     if existing_summary:
-        conversation_text += f"[PRIOR COMPRESSED CONTEXT]\n{existing_summary}\n\n"
+        conversation_text += f"[前序压缩上下文]\n{existing_summary}\n\n"
 
     for msg in messages[1:]:
         if isinstance(msg, AIMessage):
             tool_calls_info = ""
             if getattr(msg, "tool_calls", None):
                 calls = ", ".join(f"{tc['name']}({tc['args']})" for tc in msg.tool_calls)
-                tool_calls_info = f" | Tool calls: {calls}"
-            conversation_text += f"[ASSISTANT{tool_calls_info}]\n{msg.content or '(tool call only)'}\n\n"
+                tool_calls_info = f" | 工具调用：{calls}"
+            conversation_text += f"[助手{tool_calls_info}]\n{msg.content or '（仅调用工具）'}\n\n"
         elif isinstance(msg, ToolMessage):
             tool_name = getattr(msg, "name", "tool")
-            conversation_text += f"[TOOL RESULT — {tool_name}]\n{msg.content}\n\n"
+            conversation_text += f"[工具结果 — {tool_name}]\n{msg.content}\n\n"
 
     summary_response = llm.invoke([SystemMessage(content=get_context_compression_prompt()), HumanMessage(content=conversation_text)])
     new_summary = summary_response.content
@@ -286,11 +286,11 @@ def compress_context(state: AgentState, llm):
         parent_ids = sorted(r for r in retrieved_ids if r.startswith("parent::"))
         search_queries = sorted(r.replace("search::", "") for r in retrieved_ids if r.startswith("search::"))
 
-        block = "\n\n---\n**Already executed (do NOT repeat):**\n"
+        block = "\n\n---\n**已执行的检索（不要重复）：**\n"
         if parent_ids:
-            block += "Parent chunks retrieved:\n" + "\n".join(f"- {p.replace('parent::', '')}" for p in parent_ids) + "\n"
+            block += "已读取的父块：\n" + "\n".join(f"- {p.replace('parent::', '')}" for p in parent_ids) + "\n"
         if search_queries:
-            block += "Search queries already run:\n" + "\n".join(f"- {q}" for q in search_queries) + "\n"
+            block += "已执行的搜索查询：\n" + "\n".join(f"- {q}" for q in search_queries) + "\n"
         new_summary += block
 
     return {"context_summary": new_summary, "messages": [RemoveMessage(id=m.id) for m in messages[1:]]}
@@ -298,7 +298,7 @@ def compress_context(state: AgentState, llm):
 def collect_answer(state: AgentState):
     last_message = state["messages"][-1]
     is_valid = isinstance(last_message, AIMessage) and last_message.content and not last_message.tool_calls
-    answer = last_message.content if is_valid else "Unable to generate an answer."
+    answer = last_message.content if is_valid else "暂时无法生成回答。"
     return {
         "final_answer": answer,
         "agent_answers": [{
@@ -318,14 +318,14 @@ def aggregate_answers(state: State, llm):
     removals = _remove_messages_not_in(messages, keep_ids)
 
     if not state.get("agent_answers"):
-        return {"messages": removals + [AIMessage(content="No answers were generated.")]}
+        return {"messages": removals + [AIMessage(content="暂时没有生成答案。")]}
 
     sorted_answers = sorted(state["agent_answers"], key=lambda x: x["index"])
 
     formatted_answers = ""
     for i, ans in enumerate(sorted_answers, start=1):
-        formatted_answers += (f"\nRetrieved response {i}:\n"f"{ans['answer']}\n")
+        formatted_answers += (f"\n检索回答 {i}：\n"f"{ans['answer']}\n")
 
-    user_message = HumanMessage(content=f"""Original user question: {state["originalQuery"]}\nRetrieved answers:{formatted_answers}""")
+    user_message = HumanMessage(content=f"""用户原始问题：{state["originalQuery"]}\n检索到的回答：{formatted_answers}""")
     synthesis_response = llm.invoke([SystemMessage(content=get_aggregation_prompt()), user_message])
     return {"messages": removals + [AIMessage(content=synthesis_response.content)]}

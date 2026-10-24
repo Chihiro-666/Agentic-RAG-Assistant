@@ -9,6 +9,10 @@ TOOL_DISPLAY_NAMES = {
     "search_child_chunks": "\u68c0\u7d22\u6587\u6863\u7247\u6bb5",
     "retrieve_parent_chunks": "\u8bfb\u53d6\u6587\u6863\u4e0a\u4e0b\u6587",
 }
+TOOL_RESULT_MESSAGES = {
+    "NO_RELEVANT_CHUNKS": "未在知识库中找到相关文档片段。",
+    "NO_PARENT_DOCUMENT": "未找到对应的完整文档内容。",
+}
 
 SYSTEM_NODE_CONFIG = {
     "rewrite_query":     {"title": "🔍 问题分析与改写"},
@@ -104,8 +108,16 @@ class ChatInterface:
         """Fill in the tool result inside the matching collapsible message."""
         idx = active_tool_calls.get(chunk.tool_call_id)
         if idx is not None:
-            preview = str(chunk.content)[:300]
-            suffix  = "\n..." if len(str(chunk.content)) > 300 else ""
+            content = str(chunk.content)
+            preview = TOOL_RESULT_MESSAGES.get(content)
+            if preview is None and content.startswith("PARENT_RETRIEVAL_ERROR:"):
+                preview = "完整文档内容读取失败：" + content.partition(":")[2].strip()
+            elif preview is None and content.startswith("RETRIEVAL_ERROR:"):
+                preview = "文档片段检索失败：" + content.partition(":")[2].strip()
+            elif preview is None:
+                preview = content
+            preview = preview[:300]
+            suffix  = "\n..." if len(preview) == 300 and len(content) > 300 else ""
             response_messages[idx]["content"] = f"```\n{preview}{suffix}\n```"
 
     def _handle_llm_token(self, chunk, node, response_messages):

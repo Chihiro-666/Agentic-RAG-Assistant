@@ -24,7 +24,7 @@ def create_agent_graph(llm, tools_list):
 
     checkpointer = InMemorySaver()
 
-    print("Compiling agent graph...")
+    print("正在编译 Agent 工作流...")
     agent_builder = StateGraph(AgentState)
     agent_builder.add_node("orchestrator", logged_node("agent.orchestrator", partial(orchestrator, llm_with_tools=llm_with_tools)))
     agent_builder.add_node("tools", tool_node)
@@ -58,5 +58,5 @@ def create_agent_graph(llm, tools_list):
 
     agent_graph = graph_builder.compile(checkpointer=checkpointer, interrupt_before=["request_clarification"])
 
-    print("✓ Agent graph compiled successfully.")
+    print("✓ Agent 工作流编译成功。")
     return agent_graph

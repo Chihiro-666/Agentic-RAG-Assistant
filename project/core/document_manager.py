@@ -25,7 +25,7 @@ class DocumentManager:
             
         for i, doc_path in enumerate(document_paths):
             if progress_callback:
-                progress_callback((i + 1) / len(document_paths), f"Processing {Path(doc_path).name}")
+                progress_callback((i + 1) / len(document_paths), f"正在处理 {Path(doc_path).name}")
                 
             source_path = Path(doc_path)
             doc_name = source_path.stem
@@ -47,7 +47,7 @@ class DocumentManager:
                 )
                 
                 if not child_chunks:
-                    raise ValueError("No child chunks were created.")
+                    raise ValueError("未生成任何子块。")
                 
                 parent_ids = [parent_id for parent_id, _ in parent_chunks]
                 self.rag_system.parent_store.save_many(parent_chunks)
@@ -60,7 +60,7 @@ class DocumentManager:
                 self.rag_system.parent_store.delete_many(parent_ids)
                 if md_path.exists():
                     md_path.unlink()
-                print(f"Error processing {doc_path}: {e}")
+                print(f"处理文件 {doc_path} 失败：{e}")
                 skipped += 1
             
         return added, skipped

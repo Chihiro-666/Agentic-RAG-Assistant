@@ -31,12 +31,12 @@ COPY <<EOF /app/start.sh
 set -e
 
 ollama serve &
-echo "Waiting for Ollama..."
+echo "正在等待 Ollama 启动..."
 until curl -s http://localhost:11434 >/dev/null; do
   sleep 1
 done
 
-ollama pull granite4.1:8b || true
+ollama pull llama3.1:8b || true
 
 cd project
 python app.py
