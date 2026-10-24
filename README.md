@@ -1,3 +1,7 @@
+![Python](https://img.shields.io/badge/Python-3.13-blue?logo=python&logoColor=white)
+![LangGraph](https://img.shields.io/badge/LangGraph-Agent_Framework-orange)
+![Ollama](https://img.shields.io/badge/Ollama-Local_LLM-green)
+![Qdrant](https://img.shields.io/badge/Qdrant-Vector_DB-red)
 <p align="center">
   <img alt="Agentic RAG for Dummies 项目标志" src="assets/logo.png" width="350px">
 </p>
